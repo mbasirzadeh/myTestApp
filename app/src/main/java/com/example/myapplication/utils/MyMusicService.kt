@@ -55,6 +55,29 @@ class MyMusicService :Service() {
             PlaybackStateCompat.STATE_PLAYING,mediaPlayer.currentPosition.toLong(),1F)
             .setActions(PlaybackStateCompat.ACTION_SEEK_TO)
             .build())
+        //media session callback
+        mediaSession.setCallback(object: MediaSessionCompat.Callback(){
+            override fun onMediaButtonEvent(mediaButtonEvent: Intent?): Boolean {
+                if(mediaPlayer.isPlaying){
+                    //pause music
+                    mediaPlayer.pause()
+                }else{
+                    //play music
+                    mediaPlayer.start()
+                }
+                return super.onMediaButtonEvent(mediaButtonEvent)
+            }
+            override fun onSeekTo(pos: Long) {
+                super.onSeekTo(pos)
+                mediaPlayer.seekTo(pos.toInt())
+                val playBackStateNew = PlaybackStateCompat.Builder()
+                    .setState(PlaybackStateCompat.STATE_PLAYING, mediaPlayer.currentPosition.toLong(),1f)
+                    .setActions(PlaybackStateCompat.ACTION_SEEK_TO)
+                    .build()
+                mediaSession.setPlaybackState(playBackStateNew)
+            }
+        })
+
         //notification
         val notification=NotificationCompat.Builder(this, Constants.CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -76,6 +99,5 @@ class MyMusicService :Service() {
         mediaPlayer.pause()
         mediaPlayer.release()
     }
-
 
 }

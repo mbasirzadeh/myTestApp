@@ -14,6 +14,7 @@ class ContentProvider @Inject constructor(@ApplicationContext private val contex
         MediaStore.Audio.Media.DATA,
         MediaStore.Audio.Media.TITLE,
         MediaStore.Audio.Media.DURATION,
+        MediaStore.Audio.Media.ARTIST
     )
     private val cursor=context.contentResolver.query(
         MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,projection,null,null,null
@@ -23,7 +24,8 @@ class ContentProvider @Inject constructor(@ApplicationContext private val contex
         while (cursor!!.moveToNext()){
             audioList.add(Audio(cursor.getString(0),
                 cursor.getString(1),
-                cursor.getString(2)))
+                cursor.getString(2),
+                cursor.getString(3)))
         }
         return audioList
     }

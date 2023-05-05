@@ -1,8 +1,12 @@
 package com.example.myapplication.utils
 
+import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.MediaMetadata
+import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import android.media.session.MediaSession
 import android.media.session.MediaSessionManager
@@ -13,6 +17,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.graphics.drawable.toBitmap
 import androidx.core.net.toUri
 import com.example.myapplication.R
 import kotlinx.coroutines.coroutineScope
@@ -28,6 +33,7 @@ class MyMusicService :Service() {
     }
 
 
+    @SuppressLint("UseCompatLoadingForDrawables")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         //disable prev music
         try {
@@ -39,6 +45,7 @@ class MyMusicService :Service() {
         //getting music data
         val path= intent?.getStringExtra(Constants.MUSIC_PATH)?.toUri()
         val title=intent?.getStringExtra(Constants.MUSIC_TITLE)
+        val artist=intent?.getStringExtra(Constants.MUSIC_ARTIST)
         //media player
         mediaPlayer=MediaPlayer.create(this,path)
         mediaPlayer.setOnPreparedListener {
@@ -52,6 +59,7 @@ class MyMusicService :Service() {
         mediaSession.setMetadata(
             MediaMetadataCompat.Builder()
                 .putString(MediaMetadata.METADATA_KEY_TITLE,title)
+                .putString(MediaMetadata.METADATA_KEY_ARTIST,artist)
                 .putLong(MediaMetadata.METADATA_KEY_DURATION,mediaPlayer.duration.toLong())
                 .build())
         mediaSession.setPlaybackState(PlaybackStateCompat.Builder().setState(
@@ -70,13 +78,19 @@ class MyMusicService :Service() {
                 mediaSession.setPlaybackState(playBackStateNew)
             }
         })
-
+        //get cover
+        val retriever=MediaMetadataRetriever()
+        retriever.setDataSource(path.toString())
+        val coverByte= retriever.embeddedPicture
+        val coverBitmap:Bitmap = if (coverByte!=null){
+            BitmapFactory.decodeByteArray(coverByte,0,coverByte.size)
+        }else{
+            Bitmap.createBitmap(resources.getDrawable(R.drawable.ic_launcher_foreground,null).toBitmap())
+        }
         //notification
         val notification=NotificationCompat.Builder(this, Constants.CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("music")
-            .setContentText(title)
-            .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+            .setSmallIcon(android.R.drawable.ic_media_play)
+            .setLargeIcon(coverBitmap)
             .setStyle(androidx.media.app.NotificationCompat.MediaStyle().setMediaSession(mediaSession.sessionToken))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .build()

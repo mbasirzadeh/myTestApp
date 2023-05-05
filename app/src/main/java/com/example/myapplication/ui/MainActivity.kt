@@ -117,8 +117,12 @@ class MainActivity : AppCompatActivity() {
     //start music service
     private fun startService(audio: Audio){
         val intent=Intent(this,MyMusicService::class.java)
-        intent.putExtra(Constants.MUSIC_PATH,audio.path)
-        intent.putExtra(Constants.MUSIC_TITLE,audio.title)
+        intent.apply {
+            putExtra(Constants.MUSIC_PATH,audio.path)
+            putExtra(Constants.MUSIC_TITLE,audio.title)
+            putExtra(Constants.MUSIC_ARTIST,audio.artist)
+        }
+
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intent)

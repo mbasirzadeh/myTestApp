@@ -8,4 +8,5 @@ object Constants {
     //service parameter
     const val MUSIC_PATH="music_path"
     const val MUSIC_TITLE="music_title"
+    const val MUSIC_ARTIST="music_artist"
 }

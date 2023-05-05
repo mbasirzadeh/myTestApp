@@ -60,7 +60,6 @@ class MyMusicService :Service() {
             .build())
         //media session callback
         mediaSession.setCallback(object: MediaSessionCompat.Callback(){
-
             override fun onSeekTo(pos: Long) {
                 super.onSeekTo(pos)
                 mediaPlayer.seekTo(pos.toInt())
@@ -80,7 +79,6 @@ class MyMusicService :Service() {
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setStyle(androidx.media.app.NotificationCompat.MediaStyle().setMediaSession(mediaSession.sessionToken))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-
             .build()
 
         startForeground(1,notification)

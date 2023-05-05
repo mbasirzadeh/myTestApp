@@ -8,9 +8,6 @@ import android.graphics.BitmapFactory
 import android.media.MediaMetadata
 import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
-import android.media.session.MediaSession
-import android.media.session.MediaSessionManager
-import android.media.session.PlaybackState
 import android.os.IBinder
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
@@ -20,13 +17,14 @@ import androidx.core.app.NotificationCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.net.toUri
 import com.example.myapplication.R
-import kotlinx.coroutines.coroutineScope
 
 class MyMusicService :Service() {
     //media player
     lateinit var mediaPlayer:MediaPlayer
     //media session
     private lateinit var mediaSession:MediaSessionCompat
+    //media meta data
+    private lateinit var retriever:MediaMetadataRetriever
 
     override fun onBind(intent: Intent?): IBinder? {
         TODO("Not yet implemented")
@@ -62,8 +60,8 @@ class MyMusicService :Service() {
                 .putString(MediaMetadata.METADATA_KEY_ARTIST,artist)
                 .putLong(MediaMetadata.METADATA_KEY_DURATION,mediaPlayer.duration.toLong())
                 .build())
-        mediaSession.setPlaybackState(PlaybackStateCompat.Builder().setState(
-            PlaybackStateCompat.STATE_PLAYING,mediaPlayer.currentPosition.toLong(),1F)
+        mediaSession.setPlaybackState(PlaybackStateCompat.Builder()
+            .setState(PlaybackStateCompat.STATE_PLAYING,mediaPlayer.currentPosition.toLong(),1F)
             .setActions(PlaybackStateCompat.ACTION_SEEK_TO)
             .build())
         //media session callback
@@ -79,7 +77,7 @@ class MyMusicService :Service() {
             }
         })
         //get cover
-        val retriever=MediaMetadataRetriever()
+        retriever=MediaMetadataRetriever()
         retriever.setDataSource(path.toString())
         val coverByte= retriever.embeddedPicture
         val coverBitmap:Bitmap = if (coverByte!=null){
@@ -87,11 +85,16 @@ class MyMusicService :Service() {
         }else{
             Bitmap.createBitmap(resources.getDrawable(R.drawable.ic_launcher_foreground,null).toBitmap())
         }
+        //media style
+        val mediaStyle=androidx.media.app.NotificationCompat.MediaStyle()
+            .setMediaSession(mediaSession.sessionToken)
+            .setShowActionsInCompactView(0,1,2)
+            .setShowCancelButton(true)
         //notification
         val notification=NotificationCompat.Builder(this, Constants.CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setLargeIcon(coverBitmap)
-            .setStyle(androidx.media.app.NotificationCompat.MediaStyle().setMediaSession(mediaSession.sessionToken))
+            .setStyle(mediaStyle)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .build()
 

@@ -17,7 +17,8 @@ class ContentProvider @Inject constructor(@ApplicationContext private val contex
         MediaStore.Audio.Media.ARTIST
     )
     private val cursor=context.contentResolver.query(
-        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,projection,null,null,null
+        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,projection,
+        null,null,null
     )
 
     public suspend fun getMusics():MutableList<Audio>{

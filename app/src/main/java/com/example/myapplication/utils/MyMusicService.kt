@@ -15,12 +15,12 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import com.example.myapplication.R
+import kotlinx.coroutines.coroutineScope
 
 class MyMusicService :Service() {
     //media player
     lateinit var mediaPlayer:MediaPlayer
-
-    //
+    //media session
     private lateinit var mediaSession:MediaSessionCompat
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -36,13 +36,16 @@ class MyMusicService :Service() {
         }catch (e:Exception){
             Log.e("exc", "onCreate: "+e.message )
         }
-        //data
+        //getting music data
         val path= intent?.getStringExtra(Constants.MUSIC_PATH)?.toUri()
         val title=intent?.getStringExtra(Constants.MUSIC_TITLE)
         //media player
         mediaPlayer=MediaPlayer.create(this,path)
         mediaPlayer.setOnPreparedListener {
             mediaPlayer.start()
+        }
+        mediaPlayer.setOnCompletionListener {
+            stopSelf()
         }
         //building media session
         mediaSession= MediaSessionCompat(baseContext,"my music")

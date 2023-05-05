@@ -60,16 +60,7 @@ class MyMusicService :Service() {
             .build())
         //media session callback
         mediaSession.setCallback(object: MediaSessionCompat.Callback(){
-            override fun onMediaButtonEvent(mediaButtonEvent: Intent?): Boolean {
-                if(mediaPlayer.isPlaying){
-                    //pause music
-                    mediaPlayer.pause()
-                }else{
-                    //play music
-                    mediaPlayer.start()
-                }
-                return super.onMediaButtonEvent(mediaButtonEvent)
-            }
+
             override fun onSeekTo(pos: Long) {
                 super.onSeekTo(pos)
                 mediaPlayer.seekTo(pos.toInt())

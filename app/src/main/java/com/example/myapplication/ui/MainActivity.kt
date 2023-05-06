@@ -1,16 +1,36 @@
 package com.example.myapplication.ui
 
+import android.annotation.SuppressLint
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.media.MediaController2.ControllerCallback
+import android.media.MediaMetadata
+import android.media.session.MediaController
+import android.media.session.PlaybackState
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Browser
+import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.MediaMetadataCompat
+import android.support.v4.media.session.MediaControllerCompat
+import android.support.v4.media.session.PlaybackStateCompat
+import android.util.Log
 import android.view.View
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
+import androidx.media.MediaBrowserCompatUtils
+import androidx.media.MediaBrowserServiceCompat
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.myapplication.R
 import com.example.myapplication.databinding.ActivityMainBinding
 import com.example.myapplication.models.Audio
 import com.example.myapplication.ui.adapter.MusicAdapter
+import com.example.myapplication.utils.AudioService
 import com.example.myapplication.utils.Constants
 import com.example.myapplication.utils.MyMusicService
 import com.example.myapplication.vm.MainViewModel
@@ -34,12 +54,29 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var musicAdapter: MusicAdapter
 
+    //for exoplayer//
+    //mediaBrowser (connecting to mediaBrowserService & getting sessionToken from AudioService for creating MediaController)
+    private lateinit var mediaBrowser: MediaBrowserCompat
+    //mediaController (control media player)
+    private lateinit var mediaController:MediaControllerCompat
+    private var currentAudio: Audio?=null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding=ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         //request permission
         runTimePermission()
+        //init
+        mediaBrowser= MediaBrowserCompat(this, ComponentName(this,AudioService::class.java),
+        mediaBrowserConnectionCallback,null)
+
+    }
+
+    //connect to Audio service
+    override fun onStart() {
+        super.onStart()
+        mediaBrowser.connect()
     }
 
     override fun onResume() {
@@ -63,9 +100,13 @@ class MainActivity : AppCompatActivity() {
 
                 //on music click listener
                 musicAdapter.onMusicClickListener {
-                    //run service
-                    startService(it)
+                    //run start service
+                    //startService(it)
+                    currentAudio=it
+                    buildTransportControl()
                 }
+
+
 
                 //other
                 loading.observe(this@MainActivity){
@@ -79,6 +120,13 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    //disconnect Audio Service & unregister mediaController callback
+    override fun onStop() {
+        super.onStop()
+        mediaController.unregisterCallback(mediaControllerCallback)
+        mediaBrowser.disconnect()
     }
 
     //permission to access music files
@@ -110,7 +158,7 @@ class MainActivity : AppCompatActivity() {
 
     //start music service
     private fun startService(audio: Audio){
-        val intent=Intent(this,MyMusicService::class.java)
+        val intent=Intent(this,MyMusicService::class.java).setAction(Constants.INTENT_ACTION_START_MUSIC_SERVICE)
         intent.apply {
             putExtra(Constants.MUSIC_PATH,audio.path)
             putExtra(Constants.MUSIC_TITLE,audio.title)
@@ -122,5 +170,75 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    //Start Audio Service
+    private fun startAudioService(audio: Audio){
+
+    }
+
+    //Connection to AudioService call back
+    private val mediaBrowserConnectionCallback=object : MediaBrowserCompat.ConnectionCallback(){
+        override fun onConnected() {
+            super.onConnected()
+            try {
+                mediaController= MediaControllerCompat(this@MainActivity,mediaBrowser.sessionToken)
+                //register mediaController callback
+                mediaController.registerCallback(mediaControllerCallback)
+                buildTransportControl()
+            }catch (e:Exception){
+                Log.e("exc", "onConnected: "+e.message )
+            }
+        }
+    }
+
+    //transport Control
+    @SuppressLint("UseCompatLoadingForDrawables")
+    fun buildTransportControl(){
+        if (currentAudio!=null){
+            //transport Audio to service
+            mediaController.transportControls.playFromUri(
+                currentAudio?.path?.toUri()
+                ,Bundle().apply { putParcelable(Constants.MUSIC_AUDIO,currentAudio) })
+        }
+        binding.apply {
+            //play-pause
+            btnPlayPause.setOnClickListener {
+              val pbState=mediaController.playbackState.state
+              if (pbState==PlaybackStateCompat.STATE_PLAYING){
+                  btnPlayPause.background=resources.getDrawable(R.drawable.play,null)
+                  mediaController.transportControls.pause()
+              }else{
+                  btnPlayPause.background=resources.getDrawable(R.drawable.pause,null)
+                  mediaController.transportControls.play()
+              }
+            }
+        }
+
+    }
+
+    //media controller callback
+    private var mediaControllerCallback=object :MediaControllerCompat.Callback(){
+        override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
+            super.onPlaybackStateChanged(state)
+        }
+
+        override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
+            super.onMetadataChanged(metadata)
+        }
+    }
+
+    companion object{
+        fun getCallingIntent(context: Context,audio: Audio?):Intent{
+            val intent=Intent(context,MainActivity::class.java)
+            intent.putExtra(Constants.MUSIC_AUDIO,audio)
+            intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+            return intent
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        currentAudio=intent?.getParcelableExtra(Constants.MUSIC_AUDIO,Audio::class.java)
+    }
 
 }

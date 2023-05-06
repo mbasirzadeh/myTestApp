@@ -3,6 +3,7 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
     id 'dagger.hilt.android.plugin'
+    id("kotlin-parcelize")
 }
 
 android {
@@ -63,7 +64,7 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
     //dexter
     implementation 'com.karumi:dexter:6.2.3'
-    //
+    //for viewModels()
     implementation "androidx.fragment:fragment-ktx:1.5.7"
     //media
     implementation("androidx.media:media:1.6.0")
@@ -71,4 +72,10 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     // For loading and tinting drawables on older versions of the platform
     implementation("androidx.appcompat:appcompat-resources:1.6.1")
+    //exo player+extension
+    implementation 'com.google.android.exoplayer:exoplayer:2.18.6'
+    implementation 'com.google.android.exoplayer:extension-mediasession:2.18.6'
+
+
+
 }

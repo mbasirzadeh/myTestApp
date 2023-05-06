@@ -1,5 +1,7 @@
 package com.example.myapplication.di
 
+import android.media.MediaMetadata
+import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import com.example.myapplication.models.Audio
 import dagger.Module

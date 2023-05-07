@@ -34,10 +34,12 @@
                 android:value="" />
         </activity>
         <service android:name=".utils.MyMusicService"/>
-        <service android:name=".utils.AudioService"
+        <service
+            android:name=".utils.AudioService"
+            android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.media.browse.MediaBrowserService"/>
+                <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
     </application>

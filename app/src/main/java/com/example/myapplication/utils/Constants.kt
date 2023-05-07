@@ -19,4 +19,8 @@ object Constants {
     const val EXO_TAG="audio_service"
     const val NOTIFICATION_ID=1
 
+    const val MY_MEDIA_ROOT_ID = "media_root_id"
+    const val MY_EMPTY_MEDIA_ROOT_ID = "empty_root_id"
+
+
 }

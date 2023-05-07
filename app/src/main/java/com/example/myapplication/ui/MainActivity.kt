@@ -76,7 +76,9 @@ class MainActivity : AppCompatActivity() {
     //connect to Audio service
     override fun onStart() {
         super.onStart()
-        mediaBrowser.connect()
+        if (!mediaBrowser.isConnected){
+            mediaBrowser.connect()
+        }
     }
 
     override fun onResume() {
@@ -124,6 +126,7 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         mediaController.unregisterCallback(mediaControllerCallback)
+
         mediaBrowser.disconnect()
     }
 
@@ -234,7 +237,9 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        currentAudio?.path=intent?.getStringExtra(Constants.MUSIC_PATH)!!
+        if (intent?.flags==Intent.FLAG_ACTIVITY_SINGLE_TOP){
+            currentAudio?.path=intent?.getStringExtra(Constants.MUSIC_PATH)!!
+        }
     }
 
 }

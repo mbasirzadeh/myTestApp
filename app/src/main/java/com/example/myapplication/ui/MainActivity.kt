@@ -216,12 +216,21 @@ class MainActivity : AppCompatActivity() {
 
     //media controller callback
     private var mediaControllerCallback=object :MediaControllerCompat.Callback(){
+        @SuppressLint("UseCompatLoadingForDrawables")
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
+            binding.apply {
+                if (state?.state==PlaybackStateCompat.STATE_PLAYING){
+                    btnPlayPause.background=resources.getDrawable(R.drawable.pause,null)
+                }else{
+                    btnPlayPause.background=resources.getDrawable(R.drawable.play,null)
+                }
+            }
         }
 
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
             super.onMetadataChanged(metadata)
+            binding.txtTitle.text=metadata?.description?.title
         }
     }
 

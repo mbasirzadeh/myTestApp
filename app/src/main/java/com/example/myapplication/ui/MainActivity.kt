@@ -1,8 +1,10 @@
 package com.example.myapplication.ui
 
+import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.media.session.MediaController
 import android.os.Build
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
@@ -44,11 +46,12 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var musicAdapter: MusicAdapter
 
-    //for exoplayer//
+    //exoplayer//
     //mediaBrowser (connecting to mediaBrowserService & getting sessionToken from AudioService for creating MediaController)
     private lateinit var mediaBrowser: MediaBrowserCompat
     //mediaController (control media player)
     private lateinit var mediaController:MediaControllerCompat
+
     private var currentAudio: Audio?=null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -142,7 +145,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
             })
-            .check();
+            .check()
     }
 
     //start music service
@@ -159,7 +162,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     //Connection to AudioService call back
     private val mediaBrowserConnectionCallback=object : MediaBrowserCompat.ConnectionCallback(){
         override fun onConnected() {
@@ -175,7 +177,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     //transport Control
-    fun buildTransportControl(){
+    @SuppressLint("UseCompatLoadingForDrawables")
+    private fun buildTransportControl(){
         if (currentAudio!=null ){
             //transport Audio to service
             mediaController.transportControls.playFromUri(
@@ -205,11 +208,11 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-
     }
 
     //media controller callback
     private var mediaControllerCallback=object :MediaControllerCompat.Callback(){
+        @SuppressLint("UseCompatLoadingForDrawables")
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
             binding.apply {

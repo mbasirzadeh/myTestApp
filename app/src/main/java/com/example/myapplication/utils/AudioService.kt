@@ -1,13 +1,16 @@
 package com.example.myapplication.utils
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.PendingIntent
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.os.ResultReceiver
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
@@ -20,12 +23,10 @@ import com.example.myapplication.ui.MainActivity
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.SimpleBasePlayer
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector.PlaybackPreparer
 import com.google.android.exoplayer2.ext.mediasession.TimelineQueueNavigator
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -50,10 +51,19 @@ class AudioService :MediaBrowserServiceCompat() {
     //currentAudio
     private var currentArtist:String?=null
 
+    override fun onBind(intent: Intent?): IBinder? {
+        return super.onBind(intent)
+    }
+
     override fun onCreate() {
         super.onCreate()
         //init
-        //notif
+        mediaSession.isActive=true
+        sessionToken=mediaSession.sessionToken
+        mediaSessionConnector= MediaSessionConnector(mediaSession)
+        mediaSessionConnector.setPlayer(player)
+
+        //notification
         playerNotificationManager=PlayerNotificationManager.Builder(applicationContext
             ,Constants.NOTIFICATION_ID,Constants.CHANNEL_ID)
             .setMediaDescriptionAdapter(object :PlayerNotificationManager.MediaDescriptionAdapter{
@@ -75,8 +85,9 @@ class AudioService :MediaBrowserServiceCompat() {
                     return currentArtist
                 }
 
+                @SuppressLint("UseCompatLoadingForDrawables")
                 override fun getCurrentLargeIcon(player: Player, callback: PlayerNotificationManager.BitmapCallback): Bitmap? {
-                    var cover = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    val cover = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                         resources.getDrawable(android.R.drawable.ic_media_play,null)
                     }else{
                         resources.getDrawable(android.R.drawable.ic_media_play)
@@ -109,32 +120,23 @@ class AudioService :MediaBrowserServiceCompat() {
                     startForeground(notificationId,notification)
                 }
             })
-            .build()
-        playerNotificationManager.apply {
-            setUsePreviousAction(true)
-            setUsePlayPauseActions(true)
-            setUseNextAction(true)
-        }
-        playerNotificationManager.setPlayer(player)
-        sessionToken=mediaSession.sessionToken
-        mediaSession.isActive=true
-        mediaSessionConnector= MediaSessionConnector(mediaSession)
-        mediaSessionConnector.setPlayer(player)
-        playerNotificationManager.setMediaSessionToken(mediaSession.sessionToken)
+            .build().apply {
+                setUsePreviousAction(true)
+                setUsePlayPauseActions(true)
+                setUseNextAction(true)
+                setPlayer(player)
+                setMediaSessionToken(mediaSession.sessionToken)
+            }
+
+
+
 
         //connecting to MediaController for playBack
         mediaSessionConnector.setPlaybackPreparer(object :PlaybackPreparer{
-            override fun onCommand(player: Player, command: String, extras: Bundle?, cb: ResultReceiver?): Boolean {
-                return true
-            }
-            override fun onPrepare(playWhenReady: Boolean) {
-            }
-            override fun onPrepareFromSearch(query: String, playWhenReady: Boolean, extras: Bundle?) {
-
-            }
-            override fun onPrepareFromMediaId(mediaId: String, playWhenReady: Boolean, extras: Bundle?) {
-
-            }
+            override fun onCommand(player: Player, command: String, extras: Bundle?, cb: ResultReceiver?)=false
+            override fun onPrepare(playWhenReady: Boolean)=Unit
+            override fun onPrepareFromSearch(query: String, playWhenReady: Boolean, extras: Bundle?) =Unit
+            override fun onPrepareFromMediaId(mediaId: String, playWhenReady: Boolean, extras: Bundle?)=Unit
             //playBack with Uri
             override fun getSupportedPrepareActions(): Long {
                 return PlaybackStateCompat.ACTION_PLAY_FROM_URI
@@ -151,9 +153,9 @@ class AudioService :MediaBrowserServiceCompat() {
 //                    val dataSourceFactory=DefaultDataSourceFactory(this@AudioService,"media player")
 //                    val mediaSource=ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(
 //                        MediaItem.fromUri(uri))
-                    player?.setMediaItem(MediaItem.fromUri(uri))
-                    player?.prepare()
-                    player?.playWhenReady=true
+                    player.setMediaItem(MediaItem.fromUri(uri))
+                    player.prepare()
+                    player.playWhenReady =true
 
                 }
                 Log.i("infoplayback", "onPrepareFromUri: $pathToPlay")
@@ -177,14 +179,13 @@ class AudioService :MediaBrowserServiceCompat() {
 
 
     //handle client connections
-    override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
+    override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot {
         //Returns a root ID that clients can use with onLoadChildren() to retrieve
         //the content hierarchy.
         return BrowserRoot(Constants.MY_MEDIA_ROOT_ID,null)
     }
     //determinate clients access level
-    override fun onLoadChildren(parentId: String, result: Result<MutableList<MediaBrowserCompat.MediaItem>>
-    ) {
+    override fun onLoadChildren(parentId: String, result: Result<MutableList<MediaBrowserCompat.MediaItem>>) {
         result.sendResult(null)
     }
 

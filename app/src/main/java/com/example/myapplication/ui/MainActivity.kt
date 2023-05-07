@@ -87,7 +87,6 @@ class MainActivity : AppCompatActivity() {
                         layoutManager= LinearLayoutManager(this@MainActivity)
                         adapter=musicAdapter
                     }
-                    currentAudio=it.first()
                 }
 
                 //on music click listener

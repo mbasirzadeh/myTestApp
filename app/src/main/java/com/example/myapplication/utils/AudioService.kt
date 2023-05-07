@@ -147,11 +147,11 @@ class AudioService :MediaBrowserServiceCompat() {
                 currentArtist=artist
 
                 if (pathToPlay!="" && pathToPlay != currentPath.toString()){
-                    val dataSourceFactory=DefaultDataSourceFactory(this@AudioService,"media player")
-                    val mediaSource=ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(
-                        MediaItem.fromUri(uri))
-
-                    player?.prepare(mediaSource)
+//                    val dataSourceFactory=DefaultDataSourceFactory(this@AudioService,"media player")
+//                    val mediaSource=ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(
+//                        MediaItem.fromUri(uri))
+                    player?.setMediaItem(MediaItem.fromUri(uri))
+                    player?.prepare()
                     player?.playWhenReady=true
 
                 }
@@ -176,20 +176,13 @@ class AudioService :MediaBrowserServiceCompat() {
 
 
     //handle client connections
-    override fun onGetRoot(
-        clientPackageName: String,
-        clientUid: Int,
-        rootHints: Bundle?
-    ): BrowserRoot? {
+    override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
         //Returns a root ID that clients can use with onLoadChildren() to retrieve
         //the content hierarchy.
         return MediaBrowserServiceCompat.BrowserRoot(Constants.MY_MEDIA_ROOT_ID,null)
     }
-
-    //
-    override fun onLoadChildren(
-        parentId: String,
-        result: Result<MutableList<MediaBrowserCompat.MediaItem>>
+    //determinate clients access level
+    override fun onLoadChildren(parentId: String, result: Result<MutableList<MediaBrowserCompat.MediaItem>>
     ) {
         result.sendResult(null)
     }

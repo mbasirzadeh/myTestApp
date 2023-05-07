@@ -17,6 +17,7 @@ import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.net.toUri
@@ -42,32 +43,41 @@ class AudioService :MediaBrowserServiceCompat() {
     private lateinit var mediaSession:MediaSessionCompat
     //media session connector
     private lateinit var mediaSessionConnector: MediaSessionConnector
-    //currentAudio
-    private var currentAudio:com.example.myapplication.models.Audio?=null
     //notif manager
     private lateinit var playerNotificationManager: PlayerNotificationManager
+    //currentAudio
+    private var currentPath:Uri?=null
+    //currentAudio
+    private var currentTitle:String?=null
+    //currentAudio
+    private var currentArtist:String?=null
 
     override fun onCreate() {
         super.onCreate()
         //init
-        player=ExoPlayer.Builder(this).build()
+        player=ExoPlayer.Builder(baseContext).build()
         mediaSession= MediaSessionCompat(this,Constants.EXO_TAG)
-
+        //notif
         playerNotificationManager=PlayerNotificationManager.Builder(applicationContext
             ,Constants.NOTIFICATION_ID,Constants.CHANNEL_ID)
-                //notif
             .setMediaDescriptionAdapter(object :PlayerNotificationManager.MediaDescriptionAdapter{
                 override fun getCurrentContentTitle(player: Player): CharSequence {
-                    return currentAudio?.title?.subSequence(IntRange(0,10)) ?: "Unknown"
+                    return currentTitle?: "Unknown"
                 }
 
                 override fun createCurrentContentIntent(player: Player): PendingIntent? {
+                    //flag
+                    val flag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        PendingIntent.FLAG_IMMUTABLE
+                    } else {
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                    }
                     var intent=MainActivity.getCallingIntent(this@AudioService,null)
-                    return PendingIntent.getActivity(this@AudioService,0,intent,PendingIntent.FLAG_UPDATE_CURRENT)
+                    return PendingIntent.getActivity(this@AudioService,0,intent,flag)
                 }
 
                 override fun getCurrentContentText(player: Player): CharSequence? {
-                    TODO("Not yet implemented")
+                    return currentArtist
                 }
 
                 override fun getCurrentLargeIcon(
@@ -75,15 +85,20 @@ class AudioService :MediaBrowserServiceCompat() {
                     callback: PlayerNotificationManager.BitmapCallback
                 ): Bitmap? {
                     val retriever= MediaMetadataRetriever()
-                    retriever.setDataSource(currentAudio?.path)
-                    val coverByte= retriever.embeddedPicture
-                    val coverBitmap= if (coverByte!=null){
-                        BitmapFactory.decodeByteArray(coverByte,0,coverByte.size)
-                    }else{
-                        Bitmap.createBitmap(resources.getDrawable(android.R.drawable.ic_media_play,null).toBitmap())
+                    try {
+                        retriever.setDataSource(currentPath.toString())
+                        val coverByte= retriever.embeddedPicture
+                        val coverBitmap= if (coverByte!=null){
+                            BitmapFactory.decodeByteArray(coverByte,0,coverByte.size)
+                        }else{
+                            Bitmap.createBitmap(resources.getDrawable(android.R.drawable.ic_media_play,null).toBitmap())
+                        }
+                        retriever.release()
+                        return coverBitmap
+                    }catch (e:Exception){
+
                     }
-                    retriever.release()
-                    return coverBitmap
+                    return null
                 }
 
             })
@@ -125,16 +140,21 @@ class AudioService :MediaBrowserServiceCompat() {
             }
             //playBack with Uri
             override fun getSupportedPrepareActions(): Long {
-                return PlaybackStateCompat.ACTION_PREPARE_FROM_URI
+                return PlaybackStateCompat.ACTION_PLAY_FROM_URI
             }
             //playBack
-            @RequiresApi(Build.VERSION_CODES.TIRAMISU)
             override fun onPrepareFromUri(uri: Uri, playWhenReady: Boolean, extras: Bundle?) {
-                val audioToPlay=extras?.getParcelable(Constants.MUSIC_AUDIO,com.example.myapplication.models.Audio::class.java)
-                if (audioToPlay!=null && audioToPlay.path != currentAudio?.path){
+                val pathToPlay=uri.toString()
+                val title=extras?.getString(Constants.MUSIC_TITLE)
+                val artist=extras?.getString(Constants.MUSIC_ARTIST)
+                currentTitle=title
+                currentArtist=artist
+
+                if (pathToPlay!="" && pathToPlay != currentPath.toString()){
                     player?.prepare()
                     player?.playWhenReady=true
                 }
+                Log.i("infoplayback", "onPrepareFromUri: $pathToPlay")
             }
         })
         //sync clients
@@ -144,8 +164,8 @@ class AudioService :MediaBrowserServiceCompat() {
                 windowIndex: Int
             ): MediaDescriptionCompat {
                 return MediaDescriptionCompat.Builder()
-                    .setTitle(currentAudio?.title)
-                    .setIconUri(currentAudio?.path?.toUri())
+                    .setTitle(currentTitle)
+                    .setIconUri(currentPath)
                     .build()
             }
 

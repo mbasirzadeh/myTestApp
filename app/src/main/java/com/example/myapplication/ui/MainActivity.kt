@@ -106,8 +106,6 @@ class MainActivity : AppCompatActivity() {
                     buildTransportControl()
                 }
 
-
-
                 //other
                 loading.observe(this@MainActivity){
                     when(it){
@@ -170,10 +168,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    //Start Audio Service
-    private fun startAudioService(audio: Audio){
-
-    }
 
     //Connection to AudioService call back
     private val mediaBrowserConnectionCallback=object : MediaBrowserCompat.ConnectionCallback(){
@@ -197,7 +191,9 @@ class MainActivity : AppCompatActivity() {
             //transport Audio to service
             mediaController.transportControls.playFromUri(
                 currentAudio?.path?.toUri()
-                ,Bundle().apply { putParcelable(Constants.MUSIC_AUDIO,currentAudio) })
+                ,Bundle().apply {
+                    putString(Constants.MUSIC_TITLE,currentAudio?.title)
+                    putString(Constants.MUSIC_ARTIST,currentAudio?.artist)})
         }
         binding.apply {
             //play-pause
@@ -227,9 +223,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object{
-        fun getCallingIntent(context: Context,audio: Audio?):Intent{
+        fun getCallingIntent(context: Context,path: String?):Intent{
             val intent=Intent(context,MainActivity::class.java)
-            intent.putExtra(Constants.MUSIC_AUDIO,audio)
+            intent.putExtra(Constants.MUSIC_PATH,path)
             intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
             return intent
         }
@@ -238,7 +234,7 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        currentAudio=intent?.getParcelableExtra(Constants.MUSIC_AUDIO,Audio::class.java)
+        currentAudio?.path=intent?.getStringExtra(Constants.MUSIC_PATH)!!
     }
 
 }

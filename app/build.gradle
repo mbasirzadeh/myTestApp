@@ -3,7 +3,6 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
     id 'dagger.hilt.android.plugin'
-    id("kotlin-parcelize")
 }
 
 android {
@@ -75,6 +74,10 @@ dependencies {
     //exo player+extension
     implementation 'com.google.android.exoplayer:exoplayer:2.18.6'
     implementation 'com.google.android.exoplayer:extension-mediasession:2.18.6'
+
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.18.6'
+    implementation 'com.google.android.exoplayer:exoplayer-dash:2.18.6'
+    implementation 'com.google.android.exoplayer:exoplayer-ui:2.18.6'
 
 
 

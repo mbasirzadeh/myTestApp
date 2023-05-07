@@ -20,19 +20,27 @@ import com.example.myapplication.ui.MainActivity
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.SimpleBasePlayer
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector.PlaybackPreparer
 import com.google.android.exoplayer2.ext.mediasession.TimelineQueueNavigator
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class AudioService :MediaBrowserServiceCompat() {
 
     //player
-    private var player: ExoPlayer?=null
+    @Inject
+    lateinit var player:ExoPlayer
     //media session
-    private lateinit var mediaSession:MediaSessionCompat
+    @Inject
+    lateinit var mediaSession:MediaSessionCompat
     //media session connector
-    private lateinit var mediaSessionConnector: MediaSessionConnector
+    @Inject
+    lateinit var mediaSessionConnector:MediaSessionConnector
     //notif manager
     private lateinit var playerNotificationManager: PlayerNotificationManager
     //music data//
@@ -186,8 +194,7 @@ class AudioService :MediaBrowserServiceCompat() {
     override fun onDestroy() {
         mediaSession.release()
         mediaSessionConnector.setPlayer(null)
-        player?.release()
-        player=null
+        player.release()
         super.onDestroy()
     }
 }

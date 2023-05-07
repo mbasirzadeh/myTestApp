@@ -1,17 +1,10 @@
 package com.example.myapplication.ui
 
-import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.media.MediaController2.ControllerCallback
-import android.media.MediaMetadata
-import android.media.session.MediaController
-import android.media.session.PlaybackState
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Browser
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
@@ -19,12 +12,9 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import android.view.View
 import androidx.activity.viewModels
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
-import androidx.media.MediaBrowserCompatUtils
-import androidx.media.MediaBrowserServiceCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.myapplication.R
 import com.example.myapplication.databinding.ActivityMainBinding
@@ -97,6 +87,7 @@ class MainActivity : AppCompatActivity() {
                         layoutManager= LinearLayoutManager(this@MainActivity)
                         adapter=musicAdapter
                     }
+                    currentAudio=it.first()
                 }
 
                 //on music click listener
@@ -178,7 +169,6 @@ class MainActivity : AppCompatActivity() {
                 mediaController= MediaControllerCompat(this@MainActivity,mediaBrowser.sessionToken)
                 //register mediaController callback
                 mediaController.registerCallback(mediaControllerCallback)
-                buildTransportControl()
             }catch (e:Exception){
                 Log.e("exc", "onConnected: "+e.message )
             }
@@ -186,27 +176,34 @@ class MainActivity : AppCompatActivity() {
     }
 
     //transport Control
-    @SuppressLint("UseCompatLoadingForDrawables")
     fun buildTransportControl(){
-        if (currentAudio!=null){
+        if (currentAudio!=null ){
             //transport Audio to service
             mediaController.transportControls.playFromUri(
                 currentAudio?.path?.toUri()
                 ,Bundle().apply {
                     putString(Constants.MUSIC_TITLE,currentAudio?.title)
                     putString(Constants.MUSIC_ARTIST,currentAudio?.artist)})
-        }
-        binding.apply {
-            //play-pause
-            btnPlayPause.setOnClickListener {
-              val pbState=mediaController.playbackState.state
-              if (pbState==PlaybackStateCompat.STATE_PLAYING){
-                  btnPlayPause.background=resources.getDrawable(R.drawable.play,null)
-                  mediaController.transportControls.pause()
-              }else{
-                  btnPlayPause.background=resources.getDrawable(R.drawable.pause,null)
-                  mediaController.transportControls.play()
-              }
+            binding.apply {
+                //play-pause
+                btnPlayPause.setOnClickListener {
+                    val pbState=mediaController.playbackState.state
+                    if (pbState==PlaybackStateCompat.STATE_PLAYING){
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            btnPlayPause.background=resources.getDrawable(R.drawable.play,null)
+                        }else{
+                            btnPlayPause.background=resources.getDrawable(R.drawable.play)
+                        }
+                        mediaController.transportControls.pause()
+                    }else{
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            btnPlayPause.background=resources.getDrawable(R.drawable.pause,null)
+                        }else{
+                            btnPlayPause.background=resources.getDrawable(R.drawable.pause)
+                        }
+                        mediaController.transportControls.play()
+                    }
+                }
             }
         }
 
@@ -214,14 +211,21 @@ class MainActivity : AppCompatActivity() {
 
     //media controller callback
     private var mediaControllerCallback=object :MediaControllerCompat.Callback(){
-        @SuppressLint("UseCompatLoadingForDrawables")
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
             binding.apply {
                 if (state?.state==PlaybackStateCompat.STATE_PLAYING){
-                    btnPlayPause.background=resources.getDrawable(R.drawable.pause,null)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        btnPlayPause.background=resources.getDrawable(R.drawable.pause,null)
+                    }else{
+                        btnPlayPause.background=resources.getDrawable(R.drawable.pause)
+                    }
                 }else{
-                    btnPlayPause.background=resources.getDrawable(R.drawable.play,null)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        btnPlayPause.background=resources.getDrawable(R.drawable.play,null)
+                    }else{
+                        btnPlayPause.background=resources.getDrawable(R.drawable.play)
+                    }
                 }
             }
         }
@@ -241,11 +245,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         if (intent?.flags==Intent.FLAG_ACTIVITY_SINGLE_TOP){
-            currentAudio?.path=intent?.getStringExtra(Constants.MUSIC_PATH)!!
+            currentAudio?.path= intent.getStringExtra(Constants.MUSIC_PATH)!!
         }
     }
 

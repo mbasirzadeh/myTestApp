@@ -2,40 +2,28 @@ package com.example.myapplication.utils
 
 import android.app.Notification
 import android.app.PendingIntent
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.ColorSpace.Connector
 import android.media.MediaMetadataRetriever
-import android.media.session.MediaSession
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.ResultReceiver
-import android.provider.MediaStore.Audio
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.core.graphics.drawable.toBitmap
-import androidx.core.net.toUri
 import androidx.media.MediaBrowserServiceCompat
-import com.example.myapplication.R
 import com.example.myapplication.ui.MainActivity
-import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector.PlaybackPreparer
-import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector.QueueNavigator
 import com.google.android.exoplayer2.ext.mediasession.TimelineQueueNavigator
-import com.google.android.exoplayer2.extractor.mp4.Track
-import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
-import com.google.android.exoplayer2.source.MediaSource
-import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 
 class AudioService :MediaBrowserServiceCompat() {
 
@@ -75,28 +63,35 @@ class AudioService :MediaBrowserServiceCompat() {
                         PendingIntent.FLAG_UPDATE_CURRENT
                     }
                     //intent
-                    var intent=MainActivity.getCallingIntent(this@AudioService,currentPath.toString())
+                    val intent=MainActivity.getCallingIntent(this@AudioService,currentPath.toString())
                     return PendingIntent.getActivity(this@AudioService,0,intent,flag)
                 }
                 override fun getCurrentContentText(player: Player): CharSequence? {
                     return currentArtist
                 }
                 override fun getCurrentLargeIcon(player: Player, callback: PlayerNotificationManager.BitmapCallback): Bitmap? {
+                    var cover = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        resources.getDrawable(android.R.drawable.ic_media_play,null)
+                    }else{
+                        resources.getDrawable(android.R.drawable.ic_media_play)
+                    }
                     val retriever= MediaMetadataRetriever()
                     try {
+
                         retriever.setDataSource(currentPath.toString())
                         val coverByte= retriever.embeddedPicture
                         val coverBitmap= if (coverByte!=null){
                             BitmapFactory.decodeByteArray(coverByte,0,coverByte.size)
                         }else{
-                            Bitmap.createBitmap(resources.getDrawable(android.R.drawable.ic_media_play,null).toBitmap())
+                            Bitmap.createBitmap(cover.toBitmap())
                         }
                         retriever.release()
                         return coverBitmap
                     }catch (e:Exception){
                         Log.e("exc", "getCurrentLargeIcon: "+e.message )
                     }
-                    return Bitmap.createBitmap(resources.getDrawable(android.R.drawable.ic_media_play,null).toBitmap())
+
+                    return Bitmap.createBitmap(cover.toBitmap())
                 }
 
             })
@@ -179,7 +174,7 @@ class AudioService :MediaBrowserServiceCompat() {
     override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
         //Returns a root ID that clients can use with onLoadChildren() to retrieve
         //the content hierarchy.
-        return MediaBrowserServiceCompat.BrowserRoot(Constants.MY_MEDIA_ROOT_ID,null)
+        return BrowserRoot(Constants.MY_MEDIA_ROOT_ID,null)
     }
     //determinate clients access level
     override fun onLoadChildren(parentId: String, result: Result<MutableList<MediaBrowserCompat.MediaItem>>

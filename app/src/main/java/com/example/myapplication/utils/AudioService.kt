@@ -39,8 +39,7 @@ class AudioService :MediaBrowserServiceCompat() {
     @Inject
     lateinit var mediaSession:MediaSessionCompat
     //media session connector
-    @Inject
-    lateinit var mediaSessionConnector:MediaSessionConnector
+    private lateinit var mediaSessionConnector:MediaSessionConnector
     //notif manager
     private lateinit var playerNotificationManager: PlayerNotificationManager
     //music data//
@@ -54,8 +53,6 @@ class AudioService :MediaBrowserServiceCompat() {
     override fun onCreate() {
         super.onCreate()
         //init
-        player=ExoPlayer.Builder(this).build()
-        mediaSession= MediaSessionCompat(this,Constants.EXO_TAG)
         //notif
         playerNotificationManager=PlayerNotificationManager.Builder(applicationContext
             ,Constants.NOTIFICATION_ID,Constants.CHANNEL_ID)

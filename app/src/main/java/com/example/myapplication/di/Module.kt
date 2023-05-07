@@ -32,7 +32,5 @@ object Module {
     fun provideMediaSession(
         @ApplicationContext context: Context
     ):MediaSessionCompat= MediaSessionCompat(context,Constants.EXO_TAG)
-    //media session connector
-    @Provides
-    fun provideMediaSessionConnector(mediaSession: MediaSessionCompat):MediaSessionConnector=MediaSessionConnector(mediaSession)
+
 }

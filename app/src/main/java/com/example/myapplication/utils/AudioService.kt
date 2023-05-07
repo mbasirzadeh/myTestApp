@@ -1,5 +1,6 @@
 package com.example.myapplication.utils
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.PendingIntent
 import android.graphics.Bitmap
@@ -69,6 +70,7 @@ class AudioService :MediaBrowserServiceCompat() {
                 override fun getCurrentContentText(player: Player): CharSequence? {
                     return currentArtist
                 }
+
                 override fun getCurrentLargeIcon(player: Player, callback: PlayerNotificationManager.BitmapCallback): Bitmap? {
                     var cover = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                         resources.getDrawable(android.R.drawable.ic_media_play,null)
@@ -119,7 +121,7 @@ class AudioService :MediaBrowserServiceCompat() {
         //connecting to MediaController for playBack
         mediaSessionConnector.setPlaybackPreparer(object :PlaybackPreparer{
             override fun onCommand(player: Player, command: String, extras: Bundle?, cb: ResultReceiver?): Boolean {
-                TODO("Not yet implemented")
+                return true
             }
             override fun onPrepare(playWhenReady: Boolean) {
             }

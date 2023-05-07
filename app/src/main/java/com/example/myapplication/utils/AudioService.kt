@@ -108,8 +108,6 @@ class AudioService :MediaBrowserServiceCompat() {
                     startForeground(notificationId,notification)
                 }
             })
-            .setPlayActionIconResourceId(R.drawable.play)
-            .setPlayActionIconResourceId(R.drawable.pause)
             .build()
         playerNotificationManager.apply {
             setUsePreviousAction(true)

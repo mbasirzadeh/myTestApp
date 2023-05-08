@@ -1,9 +1,11 @@
 package com.example.myapplication.ui
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.UriPermission
 import android.media.session.MediaController
 import android.os.Build
 import android.os.Bundle
@@ -27,10 +29,12 @@ import com.example.myapplication.utils.Constants
 import com.example.myapplication.utils.MyMusicService
 import com.example.myapplication.vm.MainViewModel
 import com.karumi.dexter.Dexter
+import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionDeniedResponse
 import com.karumi.dexter.listener.PermissionGrantedResponse
 import com.karumi.dexter.listener.PermissionRequest
+import com.karumi.dexter.listener.multi.MultiplePermissionsListener
 import com.karumi.dexter.listener.single.PermissionListener
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -59,7 +63,7 @@ class MainActivity : AppCompatActivity() {
         binding=ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         //request permission
-        runTimePermission()
+        runTimePermission(getRequiredPermissions())
         //init
         mediaBrowser= MediaBrowserCompat(this, ComponentName(this,AudioService::class.java),
 
@@ -110,7 +114,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 exception.observe(this@MainActivity){
-
+                    Log.e("excTAG", "onResume: ", )
                 }
             }
         }
@@ -124,23 +128,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     //permission to access music files
-    private fun runTimePermission(){
+    private fun runTimePermission(permissions:MutableList<String>){
         Dexter.withContext(this)
-            .withPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE)
-            .withListener(object : PermissionListener{
-                override fun onPermissionGranted(p0: PermissionGrantedResponse?) {
-                    //calling get musics
+            .withPermissions(permissions)
+            .withListener(object :MultiplePermissionsListener{
+                override fun onPermissionsChecked(p0: MultiplePermissionsReport?) {
+                    //calling
                     lifecycleScope.launchWhenCreated {
                         viewModel.getMusics()
                     }
                 }
 
-                override fun onPermissionDenied(p0: PermissionDeniedResponse?) {
-                    recreate()
-                }
-
                 override fun onPermissionRationaleShouldBeShown(
-                    p0: PermissionRequest?,
+                    p0: MutableList<PermissionRequest>?,
                     p1: PermissionToken?
                 ) {
                     p1?.continuePermissionRequest()
@@ -241,12 +241,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object{
+        //Main Activity Intent
         fun getCallingIntent(context: Context,path: String?):Intent{
             val intent=Intent(context,MainActivity::class.java)
             intent.putExtra(Constants.MUSIC_PATH,path)
             intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
             return intent
         }
+        //required permissions
+        fun getRequiredPermissions():MutableList<String>{
+            var permissions= mutableListOf<String>()
+            if (Build.VERSION.SDK_INT >=Build.VERSION_CODES.TIRAMISU){
+                permissions.apply {
+                    add(Manifest.permission.READ_MEDIA_AUDIO)
+                    add(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }else{
+                permissions.apply {
+                    add(Manifest.permission.READ_EXTERNAL_STORAGE)
+                }
+            }
+            return permissions
+        }
+
     }
 
     override fun onNewIntent(intent: Intent?) {

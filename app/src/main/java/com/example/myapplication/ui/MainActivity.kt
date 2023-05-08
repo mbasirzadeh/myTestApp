@@ -64,15 +64,15 @@ class MainActivity : AppCompatActivity() {
         mediaBrowser= MediaBrowserCompat(this, ComponentName(this,AudioService::class.java),
 
         mediaBrowserConnectionCallback,null)
-        //connect to Audio service
-        if (!mediaBrowser.isConnected){
-            mediaBrowser.connect()
-        }
     }
 
 
     override fun onStart() {
         super.onStart()
+        //connect to Audio service
+        if (!mediaBrowser.isConnected){
+            mediaBrowser.connect()
+        }
     }
 
     override fun onResume() {
@@ -252,12 +252,17 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         if (intent?.flags==Intent.FLAG_ACTIVITY_SINGLE_TOP){
-            currentAudio?.path= intent.getStringExtra(Constants.MUSIC_PATH)!!
-            currentAudio?.title=intent.getStringExtra(Constants.MUSIC_TITLE)!!
+            val path= intent.getStringExtra(Constants.MUSIC_PATH)!!
+            val title=intent.getStringExtra(Constants.MUSIC_TITLE)!!
             binding.apply {
-                txtTitle.text=currentAudio?.title
+                currentAudio?.path=path
+                txtTitle.text=title
             }
         }
     }
 
+    //
+    fun updateUi(metadata: MediaMetadataCompat?,state: PlaybackStateCompat?){
+
+    }
 }

@@ -32,6 +32,7 @@ import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector.PlaybackPreparer
 import com.google.android.exoplayer2.ext.mediasession.TimelineQueueNavigator
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
+import com.google.android.exoplayer2.util.MimeTypes
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -162,7 +163,7 @@ class AudioService :MediaBrowserServiceCompat() {
 //                    val mediaSource=ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(
 //                        MediaItem.fromUri(uri))
                     currentPath=pathToPlay.toUri()
-                    player.setMediaItem(MediaItem.fromUri(uri))
+                    player.setMediaItem(MediaItem.Builder().setMimeType(MimeTypes.BASE_TYPE_AUDIO).setUri(uri).build())
                     player.prepare()
                     player.playWhenReady =true
 

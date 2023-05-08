@@ -249,15 +249,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object{
-        //Main Activity Intent
-        fun getCallingIntent(context: Context,path: String,title:String?,artist:String?):Intent{
-            val intent=Intent(context,MainActivity::class.java)
-            intent.putExtra(Constants.MUSIC_PATH,path)
-            intent.putExtra(Constants.MUSIC_TITLE,title)
-            intent.putExtra(Constants.MUSIC_ARTIST,artist)
-            intent.action = Constants.ACTION_NOTIF_CLICKED
-            return intent
-        }
         //required permissions
         fun getRequiredPermissions():MutableList<String>{
             var permissions= mutableListOf<String>()
@@ -278,14 +269,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        if (intent?.action==Constants.ACTION_NOTIF_CLICKED){
-            val path= intent.getStringExtra(Constants.MUSIC_PATH)!!
-            val title=intent.getStringExtra(Constants.MUSIC_TITLE)!!
-            val artist=intent.getStringExtra(Constants.MUSIC_ARTIST)!!
-            currentPath=path
-            currentTitle=title
-            currentArtist=artist
-        }
+//        if (intent?.action==Constants.ACTION_NOTIF_CLICKED){
+//            val path= intent.getStringExtra(Constants.MUSIC_PATH)!!
+//            val title=intent.getStringExtra(Constants.MUSIC_TITLE)!!
+//            val artist=intent.getStringExtra(Constants.MUSIC_ARTIST)!!
+//            currentPath=path
+//            currentTitle=title
+//            currentArtist=artist
+//        }
     }
 
     //update ui

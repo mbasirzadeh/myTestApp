@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -83,10 +84,14 @@ class AudioService :MediaBrowserServiceCompat() {
                     } else {
                         PendingIntent.FLAG_UPDATE_CURRENT
                     }
-                    //intent
-                    val intent=MainActivity.getCallingIntent(this@AudioService,
-                        currentPath.toString(),currentTitle,currentArtist)
-                    return PendingIntent.getActivity(this@AudioService,0,intent,flag)
+                    //Main Activity Intent
+                    val intentMainActivity=Intent(this@AudioService,MainActivity::class.java)
+                    intentMainActivity.putExtra(Constants.MUSIC_PATH,currentPath)
+                    intentMainActivity.putExtra(Constants.MUSIC_TITLE,currentTitle)
+                    intentMainActivity.putExtra(Constants.MUSIC_ARTIST,currentArtist)
+                    intentMainActivity.action = Constants.ACTION_NOTIF_CLICKED
+
+                    return PendingIntent.getActivity(this@AudioService,0,intentMainActivity,flag)
                 }
                 override fun getCurrentContentText(player: Player): CharSequence? {
                     return currentArtist

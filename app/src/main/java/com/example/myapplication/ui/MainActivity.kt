@@ -253,6 +253,10 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         if (intent?.flags==Intent.FLAG_ACTIVITY_SINGLE_TOP){
             currentAudio?.path= intent.getStringExtra(Constants.MUSIC_PATH)!!
+            currentAudio?.title=intent.getStringExtra(Constants.MUSIC_TITLE)!!
+            binding.apply {
+                txtTitle.text=currentAudio?.title
+            }
         }
     }
 

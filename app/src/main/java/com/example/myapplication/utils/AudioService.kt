@@ -21,6 +21,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.net.toUri
 import androidx.media.MediaBrowserServiceCompat
 import com.example.myapplication.ui.MainActivity
 import com.google.android.exoplayer2.DefaultRenderersFactory
@@ -83,6 +84,7 @@ class AudioService :MediaBrowserServiceCompat() {
                     }
                     //intent
                     val intent=MainActivity.getCallingIntent(this@AudioService,currentPath.toString())
+                    intent.putExtra(Constants.MUSIC_TITLE,currentTitle)
                     return PendingIntent.getActivity(this@AudioService,0,intent,flag)
                 }
                 override fun getCurrentContentText(player: Player): CharSequence? {
@@ -97,8 +99,7 @@ class AudioService :MediaBrowserServiceCompat() {
                     }
                     val retriever= MediaMetadataRetriever()
                     try {
-
-                        retriever.setDataSource(currentPath.toString())
+                        retriever.setDataSource(this@AudioService,currentPath)
                         val coverByte= retriever.embeddedPicture
                         val coverBitmap= if (coverByte!=null){
                             BitmapFactory.decodeByteArray(coverByte,0,coverByte.size)
@@ -160,6 +161,7 @@ class AudioService :MediaBrowserServiceCompat() {
 //                    val dataSourceFactory=DefaultDataSourceFactory(this@AudioService,"media player")
 //                    val mediaSource=ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(
 //                        MediaItem.fromUri(uri))
+                    currentPath=pathToPlay.toUri()
                     player.setMediaItem(MediaItem.fromUri(uri))
                     player.prepare()
                     player.playWhenReady =true

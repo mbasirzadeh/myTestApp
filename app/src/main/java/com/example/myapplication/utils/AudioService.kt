@@ -3,6 +3,7 @@ package com.example.myapplication.utils
 import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.PendingIntent
+import android.app.Service
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -17,9 +18,12 @@ import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.media.MediaBrowserServiceCompat
 import com.example.myapplication.ui.MainActivity
+import com.google.android.exoplayer2.DefaultRenderersFactory
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
@@ -84,7 +88,6 @@ class AudioService :MediaBrowserServiceCompat() {
                 override fun getCurrentContentText(player: Player): CharSequence? {
                     return currentArtist
                 }
-
                 @SuppressLint("UseCompatLoadingForDrawables")
                 override fun getCurrentLargeIcon(player: Player, callback: PlayerNotificationManager.BitmapCallback): Bitmap? {
                     val cover = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -107,17 +110,21 @@ class AudioService :MediaBrowserServiceCompat() {
                     }catch (e:Exception){
                         Log.e("exc", "getCurrentLargeIcon: "+e.message )
                     }
-
                     return Bitmap.createBitmap(cover.toBitmap())
                 }
-
             })
             .setNotificationListener(object :PlayerNotificationManager.NotificationListener{
+
                 override fun onNotificationCancelled(notificationId: Int, dismissedByUser: Boolean) {
+                    stopForeground(true)
                     stopSelf()
                 }
                 override fun onNotificationPosted(notificationId: Int, notification: Notification, ongoing: Boolean) {
-                    startForeground(notificationId,notification)
+                    ContextCompat.startForegroundService(
+                        this@AudioService,
+                        Intent(applicationContext,this@AudioService::class.java)
+                    )
+                    startForeground(Constants.NOTIFICATION_ID,notification)
                 }
             })
             .build().apply {
@@ -176,6 +183,7 @@ class AudioService :MediaBrowserServiceCompat() {
         })
 
     }
+
 
 
     //handle client connections

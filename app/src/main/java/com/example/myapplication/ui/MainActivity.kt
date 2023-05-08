@@ -62,15 +62,17 @@ class MainActivity : AppCompatActivity() {
         runTimePermission()
         //init
         mediaBrowser= MediaBrowserCompat(this, ComponentName(this,AudioService::class.java),
-        mediaBrowserConnectionCallback,null)
-    }
 
-    //connect to Audio service
-    override fun onStart() {
-        super.onStart()
+        mediaBrowserConnectionCallback,null)
+        //connect to Audio service
         if (!mediaBrowser.isConnected){
             mediaBrowser.connect()
         }
+    }
+
+
+    override fun onStart() {
+        super.onStart()
     }
 
     override fun onResume() {
@@ -117,8 +119,8 @@ class MainActivity : AppCompatActivity() {
     //disconnect Audio Service & unregister mediaController callback
     override fun onStop() {
         super.onStop()
-//        mediaController.unregisterCallback(mediaControllerCallback)
-//        mediaBrowser.disconnect()
+        mediaController.unregisterCallback(mediaControllerCallback)
+        mediaBrowser.disconnect()
     }
 
     //permission to access music files

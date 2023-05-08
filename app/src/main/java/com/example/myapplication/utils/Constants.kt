@@ -1,6 +1,9 @@
 package com.example.myapplication.utils
 
 object Constants {
+    //actions
+    const val ACTION_NOTIF_CLICKED="action_notif_clicked"
+
     //notification
     const val CHANNEL_ID="channel_id"
     const val CHANNEL_NAME="channel_name"

@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.UriPermission
 import android.media.session.MediaController
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
@@ -37,6 +38,7 @@ import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
 import com.karumi.dexter.listener.single.PermissionListener
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -56,7 +58,12 @@ class MainActivity : AppCompatActivity() {
     //mediaController (control media player)
     private lateinit var mediaController:MediaControllerCompat
 
-    private var currentAudio: Audio?=null
+    //currentAudio
+    private var currentPath: String?=null
+    //currentAudio
+    private var currentTitle:String?=null
+    //currentAudio
+    private var currentArtist:String?=null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,7 +73,6 @@ class MainActivity : AppCompatActivity() {
         runTimePermission(getRequiredPermissions())
         //init
         mediaBrowser= MediaBrowserCompat(this, ComponentName(this,AudioService::class.java),
-
         mediaBrowserConnectionCallback,null)
     }
 
@@ -81,10 +87,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+
         //calling getMusics
         lifecycleScope.launchWhenCreated {
             viewModel.getMusics()
         }
+
         viewModel.apply {
             binding.apply {
 
@@ -102,7 +110,14 @@ class MainActivity : AppCompatActivity() {
                 musicAdapter.onMusicClickListener {
                     //run start service
                     //startService(it)
-                    currentAudio=it
+                    currentPath=it.path
+                    currentTitle=it.title
+                    currentArtist=it.artist
+                    buildTransportControl()
+                }
+
+                //play pause clicked
+                btnPlayPause.setOnClickListener {
                     buildTransportControl()
                 }
 
@@ -170,6 +185,8 @@ class MainActivity : AppCompatActivity() {
             super.onConnected()
             try {
                 mediaController= MediaControllerCompat(this@MainActivity,mediaBrowser.sessionToken)
+                //update ui
+                updateUi(mediaController.metadata,mediaController.playbackState)
                 //register mediaController callback
                 mediaController.registerCallback(mediaControllerCallback)
             }catch (e:Exception){
@@ -179,33 +196,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     //transport Control
-    @SuppressLint("UseCompatLoadingForDrawables")
     private fun buildTransportControl(){
-        if (currentAudio!=null ){
+        if (currentPath!=null){
             //transport Audio to service
             mediaController.transportControls.playFromUri(
-                currentAudio?.path?.toUri()
+                currentPath?.toUri()
                 ,Bundle().apply {
-                    putString(Constants.MUSIC_TITLE,currentAudio?.title)
-                    putString(Constants.MUSIC_ARTIST,currentAudio?.artist)})
+                    putString(Constants.MUSIC_TITLE,currentTitle)
+                    putString(Constants.MUSIC_ARTIST,currentArtist)})
             binding.apply {
                 //play-pause
                 btnPlayPause.setOnClickListener {
                     val pbState=mediaController.playbackState.state
                     if (pbState==PlaybackStateCompat.STATE_PLAYING){
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            btnPlayPause.background=resources.getDrawable(R.drawable.play,null)
-                        }else{
-                            btnPlayPause.background=resources.getDrawable(R.drawable.play)
-                        }
                         mediaController.transportControls.pause()
+                        updateUi(mediaController.metadata,mediaController.playbackState)
                     }else{
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            btnPlayPause.background=resources.getDrawable(R.drawable.pause,null)
-                        }else{
-                            btnPlayPause.background=resources.getDrawable(R.drawable.pause)
-                        }
                         mediaController.transportControls.play()
+                        updateUi(mediaController.metadata,mediaController.playbackState)
                     }
                 }
             }
@@ -242,10 +250,12 @@ class MainActivity : AppCompatActivity() {
 
     companion object{
         //Main Activity Intent
-        fun getCallingIntent(context: Context,path: String?):Intent{
+        fun getCallingIntent(context: Context,path: String,title:String?,artist:String?):Intent{
             val intent=Intent(context,MainActivity::class.java)
             intent.putExtra(Constants.MUSIC_PATH,path)
-            intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+            intent.putExtra(Constants.MUSIC_TITLE,title)
+            intent.putExtra(Constants.MUSIC_ARTIST,artist)
+            intent.action = Constants.ACTION_NOTIF_CLICKED
             return intent
         }
         //required permissions
@@ -268,18 +278,42 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        if (intent?.flags==Intent.FLAG_ACTIVITY_SINGLE_TOP){
+        if (intent?.action==Constants.ACTION_NOTIF_CLICKED){
             val path= intent.getStringExtra(Constants.MUSIC_PATH)!!
             val title=intent.getStringExtra(Constants.MUSIC_TITLE)!!
-            binding.apply {
-                currentAudio?.path=path
-                txtTitle.text=title
-            }
+            val artist=intent.getStringExtra(Constants.MUSIC_ARTIST)!!
+            currentPath=path
+            currentTitle=title
+            currentArtist=artist
         }
     }
 
-    //
-    fun updateUi(metadata: MediaMetadataCompat?,state: PlaybackStateCompat?){
+    //update ui
+    @SuppressLint("UseCompatLoadingForDrawables")
+    private fun updateUi(metadata: MediaMetadataCompat?, state: PlaybackStateCompat?){
+        binding.apply {
+            //btn background
+            if (state?.state!=PlaybackStateCompat.STATE_PLAYING){
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    btnPlayPause.background=resources.getDrawable(R.drawable.play,null)
+                }else{
+                    btnPlayPause.background=resources.getDrawable(R.drawable.play)
+                }
+            }else{
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    btnPlayPause.background=resources.getDrawable(R.drawable.pause,null)
+                }else{
+                    btnPlayPause.background=resources.getDrawable(R.drawable.pause)
+                }
+            }
+            //title
+            txtTitle.text=metadata?.description?.title ?:"Title"
+
+            //currentAudio
+            currentPath=metadata?.description?.iconUri?.toString()
+            currentTitle=metadata?.description?.title?.toString()
+//            currentArtist=metadata?.description?.mediaUri?.authority
+        }
 
     }
 }

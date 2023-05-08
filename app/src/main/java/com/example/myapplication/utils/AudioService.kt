@@ -84,8 +84,8 @@ class AudioService :MediaBrowserServiceCompat() {
                         PendingIntent.FLAG_UPDATE_CURRENT
                     }
                     //intent
-                    val intent=MainActivity.getCallingIntent(this@AudioService,currentPath.toString())
-                    intent.putExtra(Constants.MUSIC_TITLE,currentTitle)
+                    val intent=MainActivity.getCallingIntent(this@AudioService,
+                        currentPath.toString(),currentTitle,currentArtist)
                     return PendingIntent.getActivity(this@AudioService,0,intent,flag)
                 }
                 override fun getCurrentContentText(player: Player): CharSequence? {
@@ -155,13 +155,13 @@ class AudioService :MediaBrowserServiceCompat() {
                 val pathToPlay=uri.toString()
                 val title=extras?.getString(Constants.MUSIC_TITLE)
                 val artist=extras?.getString(Constants.MUSIC_ARTIST)
-                currentTitle=title
-                currentArtist=artist
 
                 if (pathToPlay!="" && pathToPlay != currentPath.toString()){
 //                    val dataSourceFactory=DefaultDataSourceFactory(this@AudioService,"media player")
 //                    val mediaSource=ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(
 //                        MediaItem.fromUri(uri))
+                    currentTitle=title
+                    currentArtist=artist
                     currentPath=pathToPlay.toUri()
                     player.setMediaItem(MediaItem.Builder().setMimeType(MimeTypes.BASE_TYPE_AUDIO).setUri(uri).build())
                     player.prepare()
